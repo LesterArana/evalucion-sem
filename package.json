@@ -1,4 +1,6 @@
 {
+  "name": "evaluaciones-api",
+  "type": "module",
   "scripts": {
     "dev": "node src/server.js",
     "build": "npx prisma generate",
