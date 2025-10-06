@@ -1,12 +1,9 @@
 {
-  "name": "api-evaluaciones",
-  "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "build": "prisma generate",
-    "postinstall": "prisma generate",
-    "migrate:deploy": "prisma migrate deploy",
+    "build": "npx prisma generate",
+    "postinstall": "npx prisma generate",
+    "migrate:deploy": "npx prisma migrate deploy",
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
@@ -17,5 +14,6 @@
   },
   "devDependencies": {
     "prisma": "^5.18.0"
-  }
+  },
+  "engines": { "node": ">=20" }
 }
