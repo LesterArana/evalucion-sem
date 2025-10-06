@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Evaluación de Catedráticos (Demo Simple)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 20px; line-height: 1.4; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+    h1 { margin-top: 0; }
+    label { display:block; margin: 8px 0 4px; font-weight: 600; }
+    select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+    textarea { min-height: 80px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 120px; gap: 12px; align-items: center; }
+    button { padding: 10px 14px; border: 1px solid #222; background: #222; color: #fff; border-radius: 6px; cursor: pointer; }
+    button.secondary { background: #fff; color: #222; }
+    .msg { padding: 10px; border-radius: 6px; margin-top: 10px; }
+    .ok { background: #e8f7ee; border: 1px solid #a6dfbd; }
+    .err { background: #fdecea; border: 1px solid #f5b5ae; }
+    .muted { color:#666; font-size: 0.95em; }
+    .small { font-size: 0.9em; color:#444; }
+    .results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi { border: 1px dashed #bbb; padding: 10px; border-radius: 6px; }
+    footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Evaluación de Catedráticos</h1>
+ 
+
+  <!-- FORMULARIO QUEMADO -->
+  <div class="card">
+    <h2>Formulario</h2>
+
+    <label for="professor">Catedrático</label>
+    <select id="professor">
+        <option value="1">Ing. Oscar Paz</option>
+        <option value="2">Ing. Carlos Tezo</option>
+        <option value="3">Ing Mario Lopez</option>
+    </select>
+
+    <div style="margin-top:14px;">
+      <div class="row">
+        <div>Q1. Claridad al explicar</div>
+        <select id="q1">
+          <option value="">Seleccione…</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>Q2. Dominio del tema</div>
+        <select id="q2">
+          <option value="">Seleccione…</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>Q3. Resolución de dudas</div>
+        <select id="q3">
+          <option value="">Seleccione…</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>Q4. Material y recursos</div>
+        <select id="q4">
+          <option value="">Seleccione…</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>Q5. Puntualidad/organización</div>
+        <select id="q5">
+          <option value="">Seleccione…</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="comment" style="margin-top:14px;">Comentario (obligatorio)</label>
+    <textarea id="comment" placeholder="Escribe tu comentario..."></textarea>
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button id="btnSend">Enviar evaluación</button>
+      <button class="secondary" id="btnClear" type="button">Limpiar</button>
+    </div>
+    <div id="formMsg" class="msg" style="display:none;"></div>
+  </div>
+
+  <!--  RESULTADOS -->
+  <div class="card">
+    <h2>Resultados por catedrático</h2>
+    <div class="row">
+      <div>
+        <label for="professorResults">Selecciona catedrático</label>
+        <select id="professorResults">
+          <option value="1">Ing. Oscar Paz</option>
+          <option value="2">Ing. Carlos Tezo</option>
+          <option value="3">Ing Mario Lopez</option>
+        </select>
+      </div>
+      <div style="align-self:end;">
+        <button id="btnResults">Ver resultados</button>
+      </div>
+    </div>
+
+    <div id="resultsBox" style="margin-top:14px; display:none;">
+      <div class="results">
+        <div class="kpi"><strong>Catedrático:</strong> <span id="rName">—</span><br><span class="small" id="rCourse"></span></div>
+        <div class="kpi"><strong>Respuestas:</strong> <span id="rCount">—</span></div>
+        <div class="kpi"><strong>Promedio del catedrático:</strong> <span id="rProfAvg">—</span></div>
+        <div class="kpi"><strong>Promedio general del seminario:</strong> <span id="rSemAvg">—</span></div>
+      </div>
+    </div>
+    <div id="resMsg" class="msg" style="display:none;"></div>
+  </div>
+
+  
+
+  <script>
+    const API = '/api';
+    const $ = (id) => document.getElementById(id);
+    const showMsg = (el, text, ok=true) => { el.style.display='block'; el.className='msg ' + (ok?'ok':'err'); el.textContent=text; };
+    const hideMsg = (el) => { el.style.display='none'; el.textContent=''; };
+
+    $('btnSend').addEventListener('click', async () => {
+      hideMsg($('formMsg'));
+      const professorId = Number($('professor').value);
+      const q1 = Number($('q1').value);
+      const q2 = Number($('q2').value);
+      const q3 = Number($('q3').value);
+      const q4 = Number($('q4').value);
+      const q5 = Number($('q5').value);
+      const comment = ($('comment').value || '').trim();
+
+      const inRange = (n) => Number.isInteger(n) && n >= 1 && n <= 5;
+      if (!Number.isInteger(professorId) || professorId <= 0) return showMsg($('formMsg'), 'Selecciona un catedrático válido', false);
+      if (![q1,q2,q3,q4,q5].every(inRange)) return showMsg($('formMsg'), 'Todas las preguntas deben tener un valor entre 1 y 5', false);
+      if (!comment) return showMsg($('formMsg'), 'El comentario es obligatorio', false);
+
+      try {
+        const resp = await fetch(`${API}/evaluations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ professorId, q1, q2, q3, q4, q5, comment })
+        });
+        const data = await resp.json();
+        if (!resp.ok) return showMsg($('formMsg'), data.error || 'Error al guardar', false);
+        showMsg($('formMsg'), '¡Evaluación enviada! ID: ' + data.id, true);
+        $('q1').value=''; $('q2').value=''; $('q3').value=''; $('q4').value=''; $('q5').value=''; $('comment').value='';
+      } catch {
+        showMsg($('formMsg'), 'No se pudo conectar con la API', false);
+      }
+    });
+
+    $('btnClear').addEventListener('click', () => {
+      hideMsg($('formMsg'));
+      $('q1').value=''; $('q2').value=''; $('q3').value=''; $('q4').value=''; $('q5').value=''; $('comment').value='';
+    });
+
+    $('btnResults').addEventListener('click', async () => {
+      hideMsg($('resMsg'));
+      $('resultsBox').style.display='none';
+      const professorId = Number($('professorResults').value);
+      try {
+        const resp = await fetch(`${API}/results?professorId=${professorId}`);
+        const data = await resp.json();
+        if (!resp.ok) return showMsg($('resMsg'), data.error || 'No se pudo obtener resultados', false);
+        $('rName').textContent = data.professor?.name || '—';
+        $('rCourse').textContent = data.professor?.course ? 'Curso: ' + data.professor.course : '';
+        $('rCount').textContent = data.responsesCount ?? '—';
+        $('rProfAvg').textContent = (data.professorAvg ?? '—');
+        $('rSemAvg').textContent = (data.seminarAvg ?? '—');
+        $('resultsBox').style.display='block';
+      } catch {
+        showMsg($('resMsg'), 'No se pudo conectar con la API', false);
+      }
+    });
+  </script>
+</body>
+</html>
