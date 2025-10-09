@@ -13,14 +13,14 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));
 
-// __dirname en ES Modules
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Servir el HTML "quemado"
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-/** 1) Listar catedráticos */
+
 app.get('/api/professors', async (_req, res) => {
   try {
     const rows = await prisma.professor.findMany({ orderBy: { name: 'asc' } });
@@ -31,7 +31,7 @@ app.get('/api/professors', async (_req, res) => {
   }
 });
 
-/** 2) Crear evaluación */
+
 app.post('/api/evaluations', async (req, res) => {
   try {
     const { professorId, q1, q2, q3, q4, q5, comment } = req.body || {};
@@ -61,7 +61,7 @@ app.post('/api/evaluations', async (req, res) => {
   }
 });
 
-/** 3) Resultados */
+
 app.get('/api/results', async (req, res) => {
   try {
     const professorId = Number(req.query.professorId);
@@ -100,12 +100,11 @@ app.get('/api/results', async (req, res) => {
   }
 });
 
-// Salud
+
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 
-// En Vercel no levantamos el servidor, solo exportamos
 if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log(`API Postgres lista en http://localhost:${PORT}`));
 }
